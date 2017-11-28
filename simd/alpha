@@ -1,0 +1,241 @@
+	ASM_BEGIN 
+		
+		xor GAX, GAX
+		mov GCX, GCX
+		mov GDX, [GSP+ARG2] // - U load src width 
+		mov GCX, [GSP+ARG3] // - V load src height	
+		mov eax, [GSP+ARG4] // - U load alpha count
+		mov GCX, GCX 		// - V spare 
+		
+		cmp GAX, 255 		// - U compare count ... [over MAX ?]
+		ja __quit 			// - V 
+		and GCX, GCX 		// - U height is zero ? 
+		je __quit 			// - V 
+		and GDX, GDX 		// - U width is zero ? 
+		je __quit 			// - V 
+
+		// save frame 
+		// ==========================
+		
+		push GBX // - U
+		push GBP // - V
+		push GSI // - U
+		push GDI // - V
+		
+		// calc arg
+		// ==========================		
+		lea GBX, [GDX*4] 						// - U load widht 's pitch 
+		mov GBP, [GSP+ARG1+SIZE+SIZE+SIZE+SIZE] // - V load src pitch 	
+		mov GSI, [GSP+ARG0+SIZE+SIZE+SIZE+SIZE] // - U load src pointer 
+		sub GBP, GBX 							// - V get RVA pitch 
+		shl GAX, 4 								// - U get count index in table 
+		mov GBX, GDX 							// - V save width 
+		mov GAX, GAX 							// - U spare 
+		mov GDI, GDX 							// - V save width 
+		
+		// get XMM alpha ratio
+		// ==========================		
+		pxor xmm6, xmm6
+		movdqa xmm7, xmmword ptr[apt_standard+GAX]
+		
+		shr GDX, 4	// line pixel < 16 ?
+		je __lOlP64 // 
+		
+		and GDI, 15 // round 16 ?
+		jne __lOlPxx
+		
+		mov GBX, 64 
+		mov GAX, GBP 
+		mov GDI, GDX 
+		mov GBX, GBX 
+		
+		// better case ... deal 16 pixel per, line no remain 
+		// 
+		// GAX - RVA pitch 
+		// GBX - contant number 
+		// GCX - height count 
+		// GDX - count in width loop 
+		// GSI - src pointer 
+		// GDI - GDX temp
+		// =====================================================
+	align 16 
+		// fetch source pixels 
+		// ===============================
+	_lOlP:
+		SSE_SLOAD 	xmm0, 	[GSI+0x00]		 // fetch P0
+		SSE_SLOAD 	xmm1, 	[GSI+0x10]		 // fetch P1
+		SSE_SLOAD	xmm2, 	[GSI+0x20]		 // fetch P2
+		SSE_SLOAD	xmm3,	[GSI+0x30]		 // fetch P3
+
+		// rearrange - cross multiply
+		// ===============================
+		movdqa 		xmm4,	xmm0			 // xmm4 = xmm0 = P0 	
+		punpcklbw 	xmm0, 	xmm6			 // RGB cross-decomposition L0-L1 (P0)
+		pmulhuw 	xmm0, 	xmm7			 // RGB cross-mul get high L0-L1 (P0)
+		movdqa		xmm5, 	xmm1 			 // xmm5 = xmm1 = P1 	   
+		punpckhbw 	xmm4, 	xmm6			 // RGB cross-decomposition H0-H1 (P0)
+		pmulhuw 	xmm4, 	xmm7			 // RGB cross-mul get high H0-H1 (P0)
+		punpcklbw 	xmm1, 	xmm6			 // RGB cross-decomposition L0-L1 (P1)
+		packuswb 	xmm0, 	xmm4			 // P0  merge 	
+		pmulhuw 	xmm1, 	xmm7			 // RGB cross-mul get high L0-L1 (P1)		
+		punpckhbw 	xmm5, 	xmm6			 // RGB cross-decomposition H0-H1 (P1)
+		movdqa		xmm4, 	xmm2 			 // xmm4 = xmm2 = P2
+		pmulhuw 	xmm5, 	xmm7			 // RGB cross-mul get high H0-H1 (P1)	
+		punpcklbw 	xmm2, 	xmm6			 // RGB cross-decomposition L0-L1 (P2)
+		packuswb 	xmm1, 	xmm5			 // P1  merge 	
+		pmulhuw 	xmm2, 	xmm7			 // RGB cross-mul get high L0-L1 (P2)
+		punpckhbw 	xmm4, 	xmm6			 // RGB cross-decomposition H0-H1 (P2)
+		movdqa		xmm5,	xmm3			 // xmm5 = xmm3 = P3 
+		pmulhuw 	xmm4, 	xmm7			 // RGB cross-mul get high H0-H1 (P2)
+		punpcklbw 	xmm3, 	xmm6			 // RGB cross-decomposition L0-L1 (P3)
+		packuswb 	xmm2, 	xmm4			 // P2  merge 
+		pmulhuw 	xmm3, 	xmm7			 // RGB cross-mul get high L0-L1 (P3)
+		punpckhbw 	xmm5, 	xmm6			 // RGB cross-decomposition H0-H1 (P3)
+		pmulhuw 	xmm5, 	xmm7			 // RGB cross-mul get high H0-H1 (P3)
+		packuswb 	xmm3, 	xmm5			 // P3  merge 
+		
+		// write target pixels 
+		// ===============================
+		SSE_DWRITE 	[GSI+0x00], xmm0		 // write P0
+		SSE_DWRITE 	[GSI+0x10], xmm1		 // write P1
+		SSE_DWRITE	[GSI+0x20], xmm2		 // write P2
+		SSE_DWRITE	[GSI+0x30], xmm3		 // write P3
+		
+		// check loop 
+		// ===============================		
+		add 		GSI, 		GBX 
+		dec 		GDX
+		mov 		GAX, 		GAX
+		jne 		_lOlP
+		
+		// next line 
+		// ===============================		
+		add 		GSI, 		GAX 
+		mov 		GDX, 		GDI 
+		dec 		GCX
+		jne 		_lOlP
+		
+		// clear frame ret 
+		// ===============================	
+		pop 		GDI 
+		pop 		GSI 
+		pop 		GBP 
+		pop 		GBX 
+	__quit:	
+		ret 
+		// bad case ... deal 1 pixel per
+		// 
+		// GBX - contant number 
+		// GCX - height count 
+		// GDX - count in width loop 
+		// GSI - src pointer 
+		// GDI - GDX temp
+		// GBP - RVA pitch 
+		// =====================================================		
+	__lOlP64:
+		movdq2q		mm7,   xmm7 
+		pxor 		mm6, 	mm6 
+		mov 		GBX, 	4
+		mov			GDX, 	GDI
+	align 16
+	lpl64:	
+		movd 		mm0,   [GSI]		
+		movq 		mm4,	mm0	     	
+		punpcklbw 	mm0, 	mm6	    
+		pmulhuw 	mm0, 	mm7	    
+		punpckhbw 	mm4, 	mm6		
+		pmulhuw 	mm4, 	mm7		
+		packuswb 	mm0, 	mm4		
+		movd 	   [GSI],   mm0			
+		add 		GSI, 	GBX 
+		dec 		GDX
+		mov 		GAX, 	GAX
+		jne 		lpl64	
+		add 		GSI, 	GBP 
+		mov 		GDX, 	GDI 
+		dec			GCX
+		jne 		lpl64
+		pop 		GDI 
+		pop 		GSI 
+		pop 		GBP 
+		pop 		GBX 
+		emms 
+		ret 
+		
+	__lOlPxx:
+		and GDI, 15 
+		mov GAX, GBP 
+		mov GBP, GDX 
+		mov GBX, GDI
+		// normal case ... deal 16 pixel per, line remain 
+		// 
+		// GAX - RVA pitch 
+		// GBX - count in width loop - small
+		// GCX - height count 
+		// GDX - count in width loop - large
+		// GSI - src pointer 
+		// GDI - GDX temp - small
+		// GBP - GDX temp - large
+		// =====================================================
+	align 16 
+	_lOlPxx:
+		SSE_SLOAD 	xmm0, 	[GSI+0x00]		 // fetch P0
+		SSE_SLOAD 	xmm1, 	[GSI+0x10]		 // fetch P1
+		SSE_SLOAD	xmm2, 	[GSI+0x20]		 // fetch P2
+		SSE_SLOAD	xmm3,	[GSI+0x30]		 // fetch P3
+		movdqa 		xmm4,	xmm0			 // xmm4 = xmm0 = P0 	
+		punpcklbw 	xmm0, 	xmm6			 // RGB cross-decomposition L0-L1 (P0)
+		pmulhuw 	xmm0, 	xmm7			 // RGB cross-mul get high L0-L1 (P0)
+		movdqa		xmm5, 	xmm1 			 // xmm5 = xmm1 = P1 	   
+		punpckhbw 	xmm4, 	xmm6			 // RGB cross-decomposition H0-H1 (P0)
+		pmulhuw 	xmm4, 	xmm7			 // RGB cross-mul get high H0-H1 (P0)
+		punpcklbw 	xmm1, 	xmm6			 // RGB cross-decomposition L0-L1 (P1)
+		packuswb 	xmm0, 	xmm4			 // P0  merge 	
+		pmulhuw 	xmm1, 	xmm7			 // RGB cross-mul get high L0-L1 (P1)		
+		punpckhbw 	xmm5, 	xmm6			 // RGB cross-decomposition H0-H1 (P1)
+		movdqa		xmm4, 	xmm2 			 // xmm4 = xmm2 = P2
+		pmulhuw 	xmm5, 	xmm7			 // RGB cross-mul get high H0-H1 (P1)	
+		punpcklbw 	xmm2, 	xmm6			 // RGB cross-decomposition L0-L1 (P2)
+		packuswb 	xmm1, 	xmm5			 // P1  merge 	
+		pmulhuw 	xmm2, 	xmm7			 // RGB cross-mul get high L0-L1 (P2)
+		punpckhbw 	xmm4, 	xmm6			 // RGB cross-decomposition H0-H1 (P2)
+		movdqa		xmm5,	xmm3			 // xmm5 = xmm3 = P3 
+		pmulhuw 	xmm4, 	xmm7			 // RGB cross-mul get high H0-H1 (P2)
+		punpcklbw 	xmm3, 	xmm6			 // RGB cross-decomposition L0-L1 (P3)
+		packuswb 	xmm2, 	xmm4			 // P2  merge 
+		pmulhuw 	xmm3, 	xmm7			 // RGB cross-mul get high L0-L1 (P3)
+		punpckhbw 	xmm5, 	xmm6			 // RGB cross-decomposition H0-H1 (P3)
+		pmulhuw 	xmm5, 	xmm7			 // RGB cross-mul get high H0-H1 (P3)
+		packuswb 	xmm3, 	xmm5			 // P3  merge 
+		SSE_DWRITE 	[GSI+0x00], xmm0		 // write P0
+		SSE_DWRITE 	[GSI+0x10], xmm1		 // write P1
+		SSE_DWRITE	[GSI+0x20], xmm2		 // write P2
+		SSE_DWRITE	[GSI+0x30], xmm3		 // write P3	
+		add 		GSI, 		64 
+		dec 		GDX
+		mov 		GAX, 		GAX
+		jne 		_lOlPxx
+	lpl64xx:	
+		movd 		xmm0,   [GSI]		
+		movq 		xmm4,	xmm0	     	
+		punpcklbw 	xmm0, 	xmm6	    
+		pmulhuw 	xmm0, 	xmm7	    
+		punpckhbw 	xmm4, 	xmm6		
+		pmulhuw 	xmm4, 	xmm7		
+		packuswb 	xmm0, 	xmm4		
+		movd 	   [GSI],   xmm0			
+		add 		GSI, 	4
+		dec 		GBX
+		mov 		GDX, 	GBP
+		jne 		lpl64xx	
+		add 		GSI, 	GAX 
+		mov 		GBX, 	GDI
+		dec 		GCX
+		jne 		_lOlPxx
+		pop 		GDI 
+		pop 		GSI 
+		pop 		GBP 
+		pop 		GBX 
+		ret 
+		
+	ASM_END 
