@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="global.c" />
+    <ClCompile Include="startup_0.c" />
+    <ClCompile Include="frame.c">
+      <Filter>fsm/frame</Filter>
+    </ClCompile>
+    <ClCompile Include="frame.cody.c">
+      <Filter>fsm/frame</Filter>
+    </ClCompile>
+    <ClCompile Include="frame.hedgehog.c">
+      <Filter>fsm/frame</Filter>
+    </ClCompile>
+    <ClCompile Include="frame.queue.c">
+      <Filter>fsm/frame</Filter>
+    </ClCompile>
+    <ClCompile Include="fsm.cody.c">
+      <Filter>fsm/frame</Filter>
+    </ClCompile>
+    <ClCompile Include="snd.background.c">
+      <Filter>snd/effect</Filter>
+    </ClCompile>
+    <ClCompile Include="snd.cody.c">
+      <Filter>snd/effect</Filter>
+    </ClCompile>
+    <ClCompile Include="joypad_buffer_deque.c">
+      <Filter>input</Filter>
+    </ClCompile>
+    <ClCompile Include="main2.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="8bit_host.h" />
+    <ClInclude Include="global.h" />
+    <ClInclude Include="type.h" />
+    <ClInclude Include="fsm.cody.h">
+      <Filter>fsm/frame</Filter>
+    </ClInclude>
+    <ClInclude Include="frame.cody.h">
+      <Filter>fsm/frame</Filter>
+    </ClInclude>
+    <ClInclude Include="frame.h">
+      <Filter>fsm/frame</Filter>
+    </ClInclude>
+    <ClInclude Include="frame.hedgehog.h">
+      <Filter>fsm/frame</Filter>
+    </ClInclude>
+    <ClInclude Include="frame.queue.h">
+      <Filter>fsm/frame</Filter>
+    </ClInclude>
+    <ClInclude Include="snd.cody.h">
+      <Filter>snd/effect</Filter>
+    </ClInclude>
+    <ClInclude Include="snd.background.h">
+      <Filter>snd/effect</Filter>
+    </ClInclude>
+    <ClInclude Include="snd.h">
+      <Filter>snd/effect</Filter>
+    </ClInclude>
+    <ClInclude Include="joypad_buffer_deque.h">
+      <Filter>input</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="fsm/frame">
+      <UniqueIdentifier>{64424d28-8f07-4f88-83a8-0bde3a46b19f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="snd/effect">
+      <UniqueIdentifier>{cb334cec-35b4-4eef-8cab-d23e6c19aa17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="input">
+      <UniqueIdentifier>{ee4858fa-6583-483e-8773-a3379086d350}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logic/misc">
+      <UniqueIdentifier>{5f567655-a404-4d84-af22-9d9feb392dcf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,2 @@
+void *GISL_fsmcc;
+
