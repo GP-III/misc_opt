@@ -1,0 +1,236 @@
+	static ALIGN(16) unsigned long gray_lku_tlb[12] = 
+	{
+/* gray ratio */	0x004B000F, 0x00000026, 0x004B000F, 0x00000026,
+/* shuffle seq*/	0xFF000000, 0xFF040404, 0xFF080808, 0xFF0C0C0C,
+/* pmaddwd seq*/	0x00010001, 0x00010001, 0x00010001, 0x00010001
+	};
+	ASM_BEGIN 
+	 
+		mov GDX, [GSP+ARG4] // - U load src width 
+		mov GCX, [GSP+ARG5] // - V load src height	
+		// check, select
+		// ========================== 
+		and GCX, GCX 		// - U height is zero ? 
+		je __quit 			// - V 
+		and GDX, GDX 		// - U width is zero ? 
+		je __quit 			// - V 
+
+		// save frame 
+		// ==========================	
+		push GBX // - U
+		push GBP // - V
+		push GSI // - U
+		push GDI // - V
+		
+		// calc arg
+		// ==========================		
+		lea GSI, [GDX*4] 						// - U load widht 's pitch 
+		mov GBP, [GSP+ARG2+SIZE+SIZE+SIZE+SIZE] // - V load des pitch 
+		mov GBX, [GSP+ARG3+SIZE+SIZE+SIZE+SIZE] // - U load src pitch
+		sub GBP, GSI 							// - V get des RVA 
+		sub GBX, GSI 							// - U get src RVA 
+		mov GDI, [GSP+ARG0+SIZE+SIZE+SIZE+SIZE] // - V load des pointer 
+		shl GAX, 4 								// - U get count index in table
+		mov GSI, [GSP+ARG1+SIZE+SIZE+SIZE+SIZE] // - V load src pointer 
+
+		// get XMM arg
+		// ==========================		
+		movdqa xmm7, [gray_lku_tlb+0x00] // gray ratio
+		movdqa xmm6, [gray_lku_tlb+0x10] // shuffle
+		movdqa xmm5, [gray_lku_tlb+0x20] // pmad
+		pxor   xmm4, xmm4 				 // ZERO 
+		
+		mov GAX, GDX // save width 
+		mov GCX, GCX // spare 
+		
+		shr GDX, 3	// line pixel < 8 ?
+		je bad_ready // 
+		
+		and GAX, 7 // round 7 ?
+		jne normal_ready
+		
+		mov GAX, GDX  
+		mov GBX, GBX 
+		// =====================================================
+		// better case ... deal 8 pixel per, line no remain 
+		// 
+		// GAX - count 
+		// GBX - src RVA  
+		// GCX - height count 
+		// GDX - temp count 
+		// GSI - src pointer 
+		// GDI - GDX temp
+		// GBP - des RVA 
+		// =====================================================
+	align 16 
+	better_loop: 
+		SSE_SLOAD 	xmm0, 	[GSI+0x00]		 // fetch SP0
+		SSE_SLOAD 	xmm1, 	[GSI+0x10]		 // fetch SP1
+		movdqa 		xmm2, 	xmm0
+		punpcklbw 	xmm0, 	xmm4 			 // 00A100R1-00G100B1-00A000R0-00G000B0 
+		movdqa 		xmm3, 	xmm1
+		punpckhbw 	xmm2, 	xmm4 			 // 00A300R3-00G300B3-00A200R2-00G200B2			
+		pmaddwd 	xmm0, 	xmm7   			 // R1*r - G1*r+B1*r - R0*r - G0*r+B0*r 
+		punpcklbw 	xmm1, 	xmm4 			 // 00A500R5-00G500B5-00A400R4-00G400B4	
+		pmaddwd 	xmm2, 	xmm7   			 // R3*r - G3*r+B3*r - R2*r - G2*r+B2*r 
+		punpckhbw 	xmm3, 	xmm4 			 // 00A700R7-00G700B7-00A600R6-00G600B6	
+		pmaddwd 	xmm1, 	xmm7   			 // R5*r - G5*r+B5*r - R5*r - G5*r+B5*r
+		packssdw 	xmm0, 	xmm2			 // pack data 		
+		pmaddwd 	xmm3, 	xmm7   			 // R7*r - G7*r+B7*r - R6*r - G6*r+B6*r
+		pmaddwd 	xmm0, 	xmm5 			 // get final per gray avg0 		
+		packssdw 	xmm1, 	xmm3			 // pack data
+		psrld 		xmm0,	7				 // unpack 		
+		pshufb 		xmm0,	xmm6 			 // get pixel0 
+		pmaddwd 	xmm1, 	xmm5 			 // get final per gray avg1		
+		psrld 		xmm1,	7				 // unpack
+		pshufb 		xmm1,	xmm6 			 // get pixel1	
+		SSE_DWRITE	[GDI+0x00],	xmm0 		 // write P0
+		SSE_DWRITE	[GDI+0x10],	xmm1 		 // write P1		 
+// check loop 
+// ===============================		
+		add 		GSI, 	32
+		add 		GDI, 	32
+		dec 		GAX
+		jne 		better_loop
+// next line 
+// ===============================		
+		add 		GSI, 	GBX
+		add 		GDI, 	GBP
+		mov 		GAX,	GDX 
+		mov 		GBX,	GBX 
+		dec 		GCX
+		jne 		better_loop	
+// clear frame ret 
+// ===============================	
+		pop 		GDI 
+		pop 		GSI 
+		pop 		GBP 
+		pop 		GBX 
+	__quit:	
+		ret 
+		
+	normal_ready:
+		SIZE_MOV mm0, GSP 
+		
+		mov 	GSP, 	GCX 
+		mov 	GCX, 	GDX // save large 
+		bswap 	GCX 		// swap 
+		mov 	 CX, 	 AX // save small 
+		// =====================================================
+		// normal case ... deal 8 pixel per, line remain 
+		// 
+		// GAX - count in width loop - small
+		// GBX - src pitch
+		// GCX - small/large temp
+		// GDX - large count
+		// GSI - src pointer 
+		// GDI - des pointer
+		// GBP - des pitch 
+		// GSP - height count 
+		// =====================================================
+	align 16
+	normal_loop:	
+		SSE_SLOAD 	xmm0, 	[GSI+0x00]		 // fetch SP0
+		SSE_SLOAD 	xmm1, 	[GSI+0x10]		 // fetch SP1
+		movdqa 		xmm2, 	xmm0
+		punpcklbw 	xmm0, 	xmm4 			 // 00A100R1-00G100B1-00A000R0-00G000B0 
+		movdqa 		xmm3, 	xmm1
+		punpckhbw 	xmm2, 	xmm4 			 // 00A300R3-00G300B3-00A200R2-00G200B2			
+		pmaddwd 	xmm0, 	xmm7   			 // R1*r - G1*r+B1*r - R0*r - G0*r+B0*r 
+		punpcklbw 	xmm1, 	xmm4 			 // 00A500R5-00G500B5-00A400R4-00G400B4	
+		pmaddwd 	xmm2, 	xmm7   			 // R3*r - G3*r+B3*r - R2*r - G2*r+B2*r 
+		punpckhbw 	xmm3, 	xmm4 			 // 00A700R7-00G700B7-00A600R6-00G600B6	
+		pmaddwd 	xmm1, 	xmm7   			 // R5*r - G5*r+B5*r - R5*r - G5*r+B5*r
+		packssdw 	xmm0, 	xmm2			 // pack data 		
+		pmaddwd 	xmm3, 	xmm7   			 // R7*r - G7*r+B7*r - R6*r - G6*r+B6*r
+		pmaddwd 	xmm0, 	xmm5 			 // get final per gray avg0 		
+		packssdw 	xmm1, 	xmm3			 // pack data
+		psrld 		xmm0,	7				 // unpack 		
+		pshufb 		xmm0,	xmm6 			 // get pixel0 
+		pmaddwd 	xmm1, 	xmm5 			 // get final per gray avg1		
+		psrld 		xmm1,	7				 // unpack
+		pshufb 		xmm1,	xmm6 			 // get pixel1	
+		SSE_DWRITE	[GDI+0x00],	xmm0 		 // write P0
+		SSE_DWRITE	[GDI+0x10],	xmm1 		 // write P1			
+		add 		GSI, 	32
+		add 		GDI, 	32
+		dec 		GDX
+		jne 		normal_loop
+	normal_mini_loop:	
+		movd 		xmm0, 	[GSI]		 	 // fetch SP0
+		movdqa 		xmm2, 	xmm0
+		punpcklbw 	xmm0, 	xmm4 			 // 00A100R1-00G100B1-00A000R0-00G000B0 
+		punpckhbw 	xmm2, 	xmm4 			 // 00A300R3-00G300B3-00A200R2-00G200B2			
+		pmaddwd 	xmm0, 	xmm7   			 // R1*r - G1*r+B1*r - R0*r - G0*r+B0*r 
+		pmaddwd 	xmm2, 	xmm7   			 // R3*r - G3*r+B3*r - R2*r - G2*r+B2*r 
+		packssdw 	xmm0, 	xmm2			 // pack data 		
+		pmaddwd 	xmm0, 	xmm5 			 // get final per gray avg0 		
+		psrld 		xmm0,	7				 // unpack 		
+		pshufb 		xmm0,	xmm6 			 // get pixel0 	
+		movd	   [GDI],	xmm0 		 	 // write P0		 
+		add 		GSI, 	4
+		add 		GDI, 	4
+		dec 		GAX
+		jne 		normal_mini_loop		
+		add 		GSI, 	GBX
+		add 		GDI, 	GBP
+		mov 		AX,		CX 
+		bswap 		GCX 
+		mov 		DX,		CX 
+		bswap		GCX
+		dec 		GSP
+		jne 		normal_loop			
+		SIZE_MOV 	GSP, 	mm0
+		emms		
+		pop 		GDI 
+		pop 		GSI 
+		pop 		GBP 
+		pop 		GBX 
+		ret 				
+		// =====================================================
+		// bad case ... deal 1 pixel per
+		// 
+		// GAX - loop count 
+		// GBX - src RVA
+		// GCX - height 
+		// GDX - loop count temp
+		// GSI - src 
+		// GDI - des 
+		// GBP - des RVA
+		// =====================================================		
+	bad_ready:
+		mov 		GDX,	GAX 
+		movdq2q		mm7,   xmm7 	 
+		movdq2q		mm6,   xmm6 
+		movdq2q		mm5,   xmm5 	 
+		movdq2q		mm4,   xmm4	
+	align 16
+	bad_loop:	
+		movd 		mm0,   [GSI]		 	 // fetch SP0
+		movq 		mm2, 	mm0
+		punpcklbw 	mm0, 	mm4 			 // 00A100R1-00G100B1-00A000R0-00G000B0 
+		punpckhbw 	mm2, 	mm4 			 // 00A300R3-00G300B3-00A200R2-00G200B2			
+		pmaddwd 	mm0, 	mm7   			 // R1*r - G1*r+B1*r - R0*r - G0*r+B0*r 
+		pmaddwd 	mm2, 	mm7   			 // R3*r - G3*r+B3*r - R2*r - G2*r+B2*r 
+		packssdw 	mm0, 	mm2			 	 // pack data 		
+		pmaddwd 	mm0, 	mm5 			 // get final per gray avg0 		
+		psrld 		mm0,	7				 // unpack 		
+		pshufb 		mm0,	mm6 			 // get pixel0 	
+		movd	   [GDI],	mm0 		 	 // write P0		 
+		add 		GSI, 	4
+		add 		GDI, 	4
+		dec 		GAX
+		jne 		bad_loop	
+		add 		GSI, 	GBX
+		add 		GDI, 	GBP 
+		mov 		GAX, 	GDX 
+		dec			GCX
+		jne 		bad_loop
+		pop 		GDI 
+		pop 		GSI 
+		pop 		GBP 
+		pop 		GBX 
+		emms
+		ret 		
+		
+	ASM_END 

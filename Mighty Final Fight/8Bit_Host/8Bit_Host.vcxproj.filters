@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="windows">
+      <UniqueIdentifier>{eb96ff4f-74e3-4055-8568-6a2f6e63c98f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="windows\directx_gen.c">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\global.c">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\input.c">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\screen.c">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\soundtrack.c">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\system.c">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="windows\timing.c">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="emu_NESppu.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="windows\directx_gen.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="windows\global.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h" />
+    <ClInclude Include="config0.h" />
+    <ClInclude Include="emu_NESppu.h" />
+    <ClInclude Include="input.h" />
+    <ClInclude Include="screen.h" />
+    <ClInclude Include="soundtrack.h" />
+    <ClInclude Include="system.h" />
+    <ClInclude Include="timing.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="COPYING" />
+    <None Include="LICENSES" />
+    <None Include="readme.txt" />
+    <None Include="remind726[old source code].zip" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="COPYING.LIB" />
+  </ItemGroup>
+</Project>

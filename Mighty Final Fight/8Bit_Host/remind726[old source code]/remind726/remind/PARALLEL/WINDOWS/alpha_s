@@ -1,0 +1,302 @@
+    ASM_BEGIN 
+	
+     	xor GAX, GAX
+		mov GCX, GCX
+        mov GDX, [GSP+ARG4] // - U load src width 
+        mov GCX, [GSP+ARG5] // - V load src height  
+        mov eax, [GSP+ARG6] // - U load alpha count
+        mov GCX, GCX        // - V spare 
+        
+        // check, select
+        // ==========================
+        and GAX, GAX        // - U count is zero ? 
+        je __quit           // - V 
+        and GCX, GCX        // - U height is zero ? 
+        je __quit           // - V 
+        and GDX, GDX        // - U width is zero ? 
+        je __quit           // - V 
+
+        // save frame 
+        // ==========================   
+        push GBX // - U
+        push GBP // - V
+        push GSI // - U
+        push GDI // - V
+        
+        // calc arg
+        // ==========================       
+        lea GSI, [GDX*4]                        // - U load widht 's pitch 
+        mov GBP, [GSP+ARG2+SIZE+SIZE+SIZE+SIZE] // - V load des pitch 
+        mov GBX, [GSP+ARG3+SIZE+SIZE+SIZE+SIZE] // - U load src pitch
+        sub GBP, GSI                            // - V get des RVA 
+        sub GBX, GSI                            // - U get src RVA 
+        mov GDI, [GSP+ARG0+SIZE+SIZE+SIZE+SIZE] // - V load des pointer 
+        shl GAX, 4                              // - U get count index in table
+        mov GSI, [GSP+ARG1+SIZE+SIZE+SIZE+SIZE] // - V load src pointer 
+        // check enable over copy
+        // ==========================
+        cmp GAX, 255*16                         // - U compare count ... [over MAX ?]
+        ja __over_copy                          // - V 
+        
+        // get XMM alpha r
+        // ==========================       
+        movdqa xmm7, xmmword ptr[apt_standard+GAX]
+        movdqa xmm6, xmmword ptr[apt_standard_r+GAX]
+        pxor xmm5, xmm5 
+        
+        mov GAX, GDX // save width 
+        mov GCX, GCX // spare 
+        
+        shr GDX, 3  // line pixel < 8 ?
+        je bad_ready // 
+        
+        and GAX, 7 // round 7 ?
+        jne normal_ready
+        
+        mov GAX, GDX  
+        mov GBX, GBX 
+        
+        // =================================================
+        // better case ... deal 8 pixel per, line no remain 
+        // 
+        // GAX - count 
+        // GBX - src RVA  
+        // GCX - height count 
+        // GDX - temp count 
+        // GSI - src pointer 
+        // GDI - GDX temp
+        // GBP - des RVA 
+        // =================================================
+        // xmm7 + ratio 
+        // xmm6 - ratio 
+        // xmm5   ZERO 
+        // =================================================
+    align 16 
+    better_loop:
+        SSE_SLOAD   xmm0,   [GSI+0x00]      
+        SSE_SLOAD   xmm1,   [GSI+0x10]          
+        movdqa      xmm2,   xmm0             
+        movdqa      xmm3,   xmm1                    
+        punpcklbw   xmm0,   xmm5
+        punpckhbw   xmm2,   xmm5        
+        pmulhuw     xmm0,   xmm7
+        pmulhuw     xmm2,   xmm7 
+        punpcklbw   xmm1,   xmm5
+        punpckhbw   xmm3,   xmm5        
+        pmulhuw     xmm1,   xmm7 
+        pmulhuw     xmm3,   xmm7        
+        packuswb    xmm0,   xmm2
+        packuswb    xmm1,   xmm3    
+        SSE_DLOAD   xmm2,   [GDI+0x00]
+        SSE_DLOAD   xmm3,   [GDI+0x10]              
+        movdqa      xmm4,   xmm2             
+        punpcklbw   xmm2,   xmm5    
+        punpckhbw   xmm4,   xmm5    
+        pmulhuw     xmm2,   xmm6        
+        pmulhuw     xmm4,   xmm6
+        packuswb    xmm2,   xmm4        
+        movdqa      xmm4,   xmm3             
+        punpcklbw   xmm3,   xmm5        
+        punpckhbw   xmm4,   xmm5    
+        pmulhuw     xmm3,   xmm6
+        pmulhuw     xmm4,   xmm6
+        packuswb    xmm3,   xmm4
+        paddusb     xmm0,   xmm2 
+        paddusb     xmm1,   xmm3        
+        SSE_DWRITE [GDI+0x00], xmm0     
+        SSE_DWRITE [GDI+0x10], xmm1         
+        add         GSI,    32
+        add         GDI,    32
+        dec         GAX
+        jne         better_loop     
+        add         GSI,        GBX
+        add         GDI,        GBP
+        mov         GAX,        GDX 
+        mov         GBX,        GBX 
+        dec         GCX
+        jne         better_loop     
+        pop         GDI 
+        pop         GSI 
+        pop         GBP 
+        pop         GBX 
+    __quit: 
+        ret 
+        
+    normal_ready:
+        SIZE_MOV mm0, GSP 
+        
+        mov     GSP,    GCX 
+        mov     GCX,    GDX // save large 
+        bswap   GCX         // swap 
+        mov      CX,     AX // save small 
+        // =====================================================
+        // normal case ... deal 8 pixel per, line remain 
+        // 
+        // GAX - count in width loop - small
+        // GBX - src pitch
+        // GCX - small/large temp
+        // GDX - large count
+        // GSI - src pointer 
+        // GDI - des pointer
+        // GBP - des pitch 
+        // GSP - height count 
+        // =====================================================
+    align 16
+    normal_loop:    
+        SSE_SLOAD   xmm0,   [GSI+0x00]      
+        SSE_SLOAD   xmm1,   [GSI+0x10]          
+        movdqa      xmm2,   xmm0             
+        movdqa      xmm3,   xmm1                    
+        punpcklbw   xmm0,   xmm5
+        punpckhbw   xmm2,   xmm5        
+        pmulhuw     xmm0,   xmm7
+        pmulhuw     xmm2,   xmm7 
+        punpcklbw   xmm1,   xmm5
+        punpckhbw   xmm3,   xmm5        
+        pmulhuw     xmm1,   xmm7 
+        pmulhuw     xmm3,   xmm7        
+        packuswb    xmm0,   xmm2
+        packuswb    xmm1,   xmm3    
+        SSE_DLOAD   xmm2,   [GDI+0x00]
+        SSE_DLOAD   xmm3,   [GDI+0x10]              
+        movdqa      xmm4,   xmm2             
+        punpcklbw   xmm2,   xmm5    
+        punpckhbw   xmm4,   xmm5    
+        pmulhuw     xmm2,   xmm6        
+        pmulhuw     xmm4,   xmm6
+        packuswb    xmm2,   xmm4        
+        movdqa      xmm4,   xmm3             
+        punpcklbw   xmm3,   xmm5        
+        punpckhbw   xmm4,   xmm5    
+        pmulhuw     xmm3,   xmm6
+        pmulhuw     xmm4,   xmm6
+        packuswb    xmm3,   xmm4
+        paddusb     xmm0,   xmm2 
+        paddusb     xmm1,   xmm3        
+        SSE_DWRITE [GDI+0x00], xmm0     
+        SSE_DWRITE [GDI+0x10], xmm1         
+        add         GSI,    32
+        add         GDI,    32
+        dec         GDX
+        jne         normal_loop
+    normal_mini_loop:   
+        movd        xmm0,   [GSI]                   
+        movdqa      xmm2,   xmm0                                
+        punpcklbw   xmm0,   xmm5
+        punpckhbw   xmm2,   xmm5        
+        pmulhuw     xmm0,   xmm7
+        pmulhuw     xmm2,   xmm7        
+        packuswb    xmm0,   xmm2
+        movd        xmm2,   [GDI]           
+        movdqa      xmm4,   xmm2             
+        punpcklbw   xmm2,   xmm5    
+        punpckhbw   xmm4,   xmm5    
+        pmulhuw     xmm2,   xmm6        
+        pmulhuw     xmm4,   xmm6
+        packuswb    xmm2,   xmm4                     
+        paddusb     xmm0,   xmm2        
+        movd       [GDI],   xmm0                 
+        add         GSI,    4
+        add         GDI,    4
+        dec         GAX
+        jne         normal_mini_loop        
+        add         GSI,    GBX
+        add         GDI,    GBP
+        mov         AX,     CX 
+        bswap       GCX 
+        mov         DX,     CX 
+        bswap       GCX
+        dec         GSP
+        jne         normal_loop         
+        SIZE_MOV    GSP,    mm0
+        emms        
+        pop         GDI 
+        pop         GSI 
+        pop         GBP 
+        pop         GBX 
+        ret                 
+        // =====================================================
+        // bad case ... deal 1 pixel per
+        // 
+        // GAX - loop count 
+        // GBX - src RVA
+        // GCX - height 
+        // GDX - loop count temp
+        // GSI - src 
+        // GDI - des 
+        // GBP - des RVA
+        // =====================================================        
+    bad_ready:
+        mov         GDX,    GAX 
+        movdq2q     mm7,   xmm7     
+        movdq2q     mm6,   xmm6
+        movdq2q     mm5,   xmm5
+    align 16
+    bad_loop:   
+        movd        mm0,   [GSI]                    
+        movq        mm2,    mm0                             
+        punpcklbw   mm0,    mm5
+        punpckhbw   mm2,    mm5         
+        pmulhuw     mm0,    mm7
+        pmulhuw     mm2,    mm7         
+        packuswb    mm0,    mm2
+        movd        mm2,   [GDI]            
+        movq        mm4,    mm2          
+        punpcklbw   mm2,    mm5 
+        punpckhbw   mm4,    mm5     
+        pmulhuw     mm2,    mm6     
+        pmulhuw     mm4,    mm6
+        packuswb    mm2,    mm4                  
+        paddusb     mm0,    mm2         
+        movd       [GDI],   mm0 
+        add         GSI,    4
+        add         GDI,    4
+        dec         GAX
+        jne         bad_loop    
+        add         GSI,    GBX
+        add         GDI,    GBP 
+        mov         GAX,    GDX 
+        dec         GCX
+        jne         bad_loop
+        pop         GDI 
+        pop         GSI 
+        pop         GBP 
+        pop         GBX 
+        emms
+        ret 
+        // =====================================================
+        // N/A case ... same as bitblt 
+        // =====================================================
+    __over_copy:    
+        SIZE_MOV   xmm0,    GSP
+        mov         GSP,    GCX 
+        mov         GCX,    GDX     
+#ifdef OVER_ALIGNED  
+        cld 
+    align 16
+    over_copy_loop:
+        rep         movsd                                   
+#else 
+    align 16
+    over_copy_loop:
+        mov         EAX,   [GSI]       
+        lea         GSI,   [GSI+4]     
+        mov        [GDI],   EAX       
+        sub         GCX,    1          
+        lea         GDI,   [GDI+4]      
+        jne         over_copy_loop                                
+#endif
+        add         GSI,    GBX        
+        add         GDI,    GBP       
+        mov         GAX,    GAX        
+        mov         GCX,    GDX        
+        dec         GSP 
+        jne         over_copy_loop
+        SIZE_MOV    GSP,   xmm0 
+        pop         GDI 
+        pop         GSI 
+        pop         GBP 
+        pop         GBX 
+        ret 
+        
+    ASM_END
