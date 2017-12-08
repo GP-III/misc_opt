@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="molios.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="th08_keyedit.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="th08_keyedit.c" />
+    <ClCompile Include="board.c" />
+    <ClCompile Include="board_src.c" />
+    <ClCompile Include="bclr.c" />
+    <ClCompile Include="calc_src.c" />
+    <ClCompile Include="calc.c" />
+    <ClCompile Include="alloc.c" />
+    <ClCompile Include="monitor_src.c" />
+    <ClCompile Include="monitor.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="th08.ico" />
+  </ItemGroup>
+</Project>
