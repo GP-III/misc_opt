@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="stdwtl.cxx" />
+    <ClCompile Include="midi_piano.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdwtl.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="CDockingTabChild.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CDockingTabContainer.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CMainFrame.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CAbout.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CPianoDraw.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CPianoWindow.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CMessageIdleFastLoop.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="CLoadingWindow.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CFileDialogFilter.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CFile_eps.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CPlayerThread.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsChorus.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsCompressor.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsDistortion.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsEcho.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsFlanger.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsGargle.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsParamEQ.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsReverb.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewDS_EffectsReverbLevel2.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CDirectDraw.hxx">
+      <Filter>main\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="CDirectInput.hxx">
+      <Filter>main\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="CDirectMusic2.hxx">
+      <Filter>main\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewPaneT.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CLockLessDIKMsgQueue.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewIoInstructments.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CViewPlayRecordSettings.inl">
+      <Filter>main\PaneSet</Filter>
+    </ClInclude>
+    <ClInclude Include="CThreadTiming.hxx">
+      <Filter>main</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="CAlphaSingle32.asm">
+      <Filter>main</Filter>
+    </MASM>
+    <MASM Include="CSurfaceCopy32.asm">
+      <Filter>main</Filter>
+    </MASM>
+    <MASM Include="CAlphaDouble32.asm">
+      <Filter>main</Filter>
+    </MASM>
+    <MASM Include="cas32.asm">
+      <Filter>main</Filter>
+    </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="midi_piano.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="midi_piano.ico" />
+    <Image Include="WTL.ico" />
+    <Image Include="ATL.ico" />
+    <Image Include="WTLAppWiz.ico" />
+    <Image Include="ListItems.bmp" />
+    <Image Include="midi_piano.png" />
+    <Image Include="loading.png" />
+    <Image Include="CViewIoInstructments.ico" />
+    <Image Include="effect_echo.ico" />
+    <Image Include="effect_reverb.ico" />
+    <Image Include="effect_eq.ico" />
+    <Image Include="effect_gargle.ico" />
+    <Image Include="effect_distortion.ico" />
+    <Image Include="effect_compressor.ico" />
+    <Image Include="effect_chorus.ico" />
+    <Image Include="effect_flanger.ico" />
+    <Image Include="record.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="divider.cur" />
+    <None Include="hand.cur" />
+    <None Include="..\..\..\Downloads\MidiPiano_226\Midi\Liszt La Campanella.mid" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="main">
+      <UniqueIdentifier>{c0ea77d2-e3da-4250-8828-b7adc85c7ded}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="main\directx">
+      <UniqueIdentifier>{a983d248-f414-4c10-b06f-1b67e9bb819f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="main\PaneSet">
+      <UniqueIdentifier>{e766d9ab-a0c4-480a-9001-b706e2e75f0b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

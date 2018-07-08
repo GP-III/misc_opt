@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CAbout.hxx" />
+    <ClInclude Include="CDirectDraw.hxx" />
+    <ClInclude Include="CDirectInput.hxx" />
+    <ClInclude Include="CDirectMusic2.hxx" />
+    <ClInclude Include="CDockingTabChild.hxx" />
+    <ClInclude Include="CDockingTabContainer.hxx" />
+    <ClInclude Include="CFileDialogFilter.hxx" />
+    <ClInclude Include="CFile_eps.hxx" />
+    <ClInclude Include="CLoadingWindow.hxx" />
+    <ClInclude Include="CLockLessDIKMsgQueue.hxx" />
+    <ClInclude Include="CMainFrame.hxx" />
+    <ClCompile Include="midi_piano.cc" />
+    <ClCompile Include="stdwtl.cxx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CMessageIdleFastLoop.hxx" />
+    <ClInclude Include="CPlayerThread.hxx" />
+    <ClInclude Include="CPianoDraw.hxx" />
+    <ClInclude Include="CPianoWindow.hxx" />
+    <ClInclude Include="CThreadTiming.hxx" />
+    <ClInclude Include="CViewPaneT.hxx" />
+    <ClInclude Include="CViewDS_EffectsChorus.inl" />
+    <ClInclude Include="CViewDS_EffectsCompressor.inl" />
+    <ClInclude Include="CViewDS_EffectsDistortion.inl" />
+    <ClInclude Include="CViewDS_EffectsEcho.inl" />
+    <ClInclude Include="CViewDS_EffectsFlanger.inl" />
+    <ClInclude Include="CViewDS_EffectsGargle.inl" />
+    <ClInclude Include="CViewDS_EffectsParamEQ.inl" />
+    <ClInclude Include="CViewDS_EffectsReverb.inl" />
+    <ClInclude Include="CViewDS_EffectsReverbLevel2.inl" />
+    <ClInclude Include="CViewIoInstructments.inl" />
+    <ClInclude Include="CViewPlayRecordSettings.inl" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="stdwtl.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="CAlphaDouble32.asm" />
+    <MASM Include="CAlphaSingle32.asm" />
+    <MASM Include="cas32.asm" />
+    <MASM Include="CSurfaceCopy32.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="midi_piano.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ATL.ico" />
+    <Image Include="CViewIoInstructments.ico" />
+    <Image Include="effect_chorus.ico" />
+    <Image Include="effect_compressor.ico" />
+    <Image Include="effect_distortion.ico" />
+    <Image Include="effect_echo.ico" />
+    <Image Include="effect_eq.ico" />
+    <Image Include="effect_flanger.ico" />
+    <Image Include="effect_gargle.ico" />
+    <Image Include="effect_reverb.ico" />
+    <Image Include="ListItems.bmp" />
+    <Image Include="loading.png" />
+    <Image Include="midi_piano.ico" />
+    <Image Include="midi_piano.png" />
+    <Image Include="record.ico" />
+    <Image Include="WTL.ico" />
+    <Image Include="WTLAppWiz.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Downloads\MidiPiano_226\Midi\Liszt La Campanella.mid" />
+    <None Include="divider.cur" />
+    <None Include="hand.cur" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{17C34AE4-D012-4389-97D5-1BCC1F371FEA}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>midi_piano</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>external;external\WTL;external\directx\include;$(IncludePath)</IncludePath>
+    <LibraryPath>external\directx\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Users\nozaki\Desktop\midi_piano\midi_piano\external\directx;C:\Users\nozaki\Desktop\midi_piano\midi_piano\external\dockwins;C:\Users\nozaki\Desktop\midi_piano\midi_piano\external\WTL;C:\Users\nozaki\Desktop\midi_piano\midi_piano\external;C:\Users\nozaki\Desktop\midi_piano\midi_piano\external\directx\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\nozaki\Desktop\midi_piano\midi_piano\external\directx\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;__WTL_SOURCE_HACK_TYPE1;__WTL_SOURCE_HACK_TYPE2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>stdwtl.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>dxguid.lib;d3d9.lib;d3dx9.lib;dinput8.lib;dsound.lib;KSProxy.Lib;ksuser.lib;imm32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;__WTL_SOURCE_HACK_TYPE1;__WTL_SOURCE_HACK_TYPE2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>dxguid.lib;d3d9.lib;d3dx9.lib;dinput8.lib;dsound.lib;KSProxy.Lib;ksuser.lib;imm32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="midi_piano.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
